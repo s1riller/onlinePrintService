@@ -51,7 +51,12 @@ class LoginSerializer(serializers.Serializer):
                 'A password is required to log in.'
             )
 
-        user = authenticate(username=User.objects.get(email=email).username, password=password)
+       
+        # username=User.objects.get(email=email).username Старый способ получения пользователя по email
+        user = User.objects.filter(email=email).first()
+        username = user.username if user else None
+
+        user = authenticate(username=username, password=password)
 
         if user is None:
             raise serializers.ValidationError(
