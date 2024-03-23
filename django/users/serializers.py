@@ -51,7 +51,6 @@ class LoginSerializer(serializers.Serializer):
                 'A password is required to log in.'
             )
 
-       
         # username=User.objects.get(email=email).username Старый способ получения пользователя по email
         user = User.objects.filter(email=email).first()
         username = user.username if user else None
