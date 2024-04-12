@@ -1,67 +1,58 @@
+# models.py в вашем приложении
+from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser,PermissionsMixin
-from django.urls import reverse
-from .manager import UserManager
-from datetime import datetime
-import jwt
-from django.conf import settings
-from django.utils.timezone import timedelta
+from phonenumber_field.modelfields import PhoneNumberField
+from django.dispatch import receiver
+from django.db.models.signals import post_save,post_delete
+from django.utils.crypto import get_random_string
 
-class User(AbstractBaseUser, PermissionsMixin):
-    username = models.CharField(max_length=150, unique=True)
-    first_name = models.CharField(max_length=30, blank=True)
-    last_name = models.CharField(max_length=150, blank=True)
-    email = models.EmailField(max_length=255, unique=True, blank=True, null=True)
-    last_online = models.DateTimeField(blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
+from .utils import NextCloud
 
-    objects = UserManager()
 
-    USERNAME_FIELD = 'username'
-    EMAIL_FIELD = 'email'
-    REQUIRED_FIELDS = ['email']
+class CustomUser(AbstractUser):
+    date_of_birth = models.DateField(null=True, blank=True)
+    phone_number = PhoneNumberField(blank=True)
+    password_nextcloud = models.CharField(max_length=50, blank=True)
 
-    class Meta:
-        ordering = ['username']
+    def save(self, *args, **kwargs):
+        # Check if the user is already in the database
+        if self.pk:
+            orig = CustomUser.objects.get(pk=self.pk)
+            if orig.password != self.password:
+                self.set_password(self.password)  # Hash new password if changed
+        else:
+            self.set_password(self.password)  # Hash password for new user
 
-    def get_absolute_url(self):
-        return reverse('users:profile', kwargs={'user': self.username})
+        super().save(*args, **kwargs)  # Call the "real" save() method.
+
+
+@receiver(post_save, sender=CustomUser)
+def create_nextcloud_user(sender, instance, created, **kwargs):
+    if created:
+        NextCloud.enable_user(instance.username)
+        NextCloud.create_user(instance.username, instance.password_nextcloud)
+
+@receiver(post_delete, sender=CustomUser)
+def delete_nextcloud_user(sender, instance, **kwargs):
+    NextCloud.disable_user(instance.username)
+
+
+class File(models.Model):
+    name = models.CharField(max_length=255)
+    upload_date = models.DateTimeField(auto_now_add=True)
+    owner = models.ForeignKey(CustomUser, on_delete=models.DO_NOTHING, related_name='files')
+    url = models.TextField()
 
     def __str__(self):
+        return self.name
 
-        return self.email
-    @property
-    def token(self):
-        """
-        Позволяет получить токен пользователя путем вызова user.token, вместо
-        user._generate_jwt_token(). Декоратор @property выше делает это
-        возможным. token называется "динамическим свойством".
-        """
-        return self._generate_jwt_token()
 
-    def get_full_name(self):
-        """
-        Этот метод требуется Django для таких вещей, как обработка электронной
-        почты. Обычно это имя фамилия пользователя, но поскольку мы не
-        используем их, будем возвращать username.
-        """
-        return self.username
+@receiver(post_save, sender=File)
+def upload_nextcloud_file(sender, instance, created, **kwargs):
 
-    def get_short_name(self):
-        """ Аналогично методу get_full_name(). """
-        return self.username
+    NextCloud.upload_file()
 
-    def _generate_jwt_token(self):
-        """
-        Генерирует веб-токен JSON, в котором хранится идентификатор этого
-        пользователя, срок действия токена составляет 1 день от создания
-        """
-        dt = datetime.now() + timedelta(days=1)
 
-        token = jwt.encode({
-            'id': self.pk,
-            'exp': int(dt.timestamp())
-        }, settings.SECRET_KEY, algorithm='HS256')
-
-        return token
+class UserProfile(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    avatar_url = models.URLField(blank=True, null=True)
