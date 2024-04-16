@@ -74,7 +74,7 @@
             Регистрация
           </button>
         </div>
-        <img src="./img/log.svg" class="image" alt="" />
+        <img src="@/assets/logo.png" class="image" alt="" />
       </div>
 
       <div class="panel right-panel">
@@ -85,13 +85,13 @@
             Войти
           </button>
         </div>
-        <img src="./img/register.svg" class="image" alt="" />
+        <img src="@/assets/logo.png" class="image" alt="" />
       </div>
     </div>
   </div>
 </template>
 
-<style>
+<style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap");
 
 * {

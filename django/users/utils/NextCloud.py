@@ -92,16 +92,16 @@ def upload_text_file_to_nextcloud(file_content="1+1=2", file_name="calc.txt"):
     # Полный путь к файлу в Nextcloud
     full_url = f"http://{url}/remote.php/dav/files/{nextcloud_admin_user}/{file_name}"
 
-    # Заголовки запроса
+
     headers = {
         "Content-Type": "text/plain"
     }
 
-    # Выполнение запроса PUT для загрузки файла
+
     response = requests.put(full_url, data=file_content, headers=headers,
                             auth=HTTPBasicAuth(nextcloud_admin_user, nextcloud_admin_password))
 
-    # Проверка результатов загрузки
+
     if response.status_code in [200, 201]:
         print("Файл успешно загружен.")
     else:

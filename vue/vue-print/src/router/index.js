@@ -19,7 +19,23 @@ const routes = [
     path: '/auth',
     name: 'auth',
     component: () => import('@/views/LoginView.vue')
+  },
+  {
+    path: '/operation-history',
+    name: 'operation-history',
+    component: () => import('@/views/HistoryView.vue')
+  },
+  {
+    path: '/document-choice',
+    name: 'document-choice',
+    component: () => import('@/views/PrintPage.vue')
+  },
+  {
+    path: '/profile',
+    name: 'user-profile',
+    component: () => import('@/views/ProfileView.vue')
   }
+
 ]
 
 const router = createRouter({

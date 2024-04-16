@@ -40,8 +40,8 @@ def delete_nextcloud_user(sender, instance, **kwargs):
 class File(models.Model):
     name = models.CharField(max_length=255)
     upload_date = models.DateTimeField(auto_now_add=True)
-    owner = models.ForeignKey(CustomUser, on_delete=models.DO_NOTHING, related_name='files')
-    url = models.TextField()
+    owner = models.ForeignKey(CustomUser, on_delete=models.DO_NOTHING, related_name='files',null=True, blank=True)
+    url = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -55,4 +55,9 @@ def upload_nextcloud_file(sender, instance, created, **kwargs):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
-    avatar_url = models.URLField(blank=True, null=True)
+    avatar = models.ForeignKey(File, on_delete=models.DO_NOTHING, related_name='avatar')
+
+    def __str__(self):
+        # This assumes that `name` is an attribute of the `File` model which holds the avatar's name
+        avatar_name = self.avatar.name if self.avatar else 'No Avatar'
+        return f"{self.user.username}              {avatar_name}"

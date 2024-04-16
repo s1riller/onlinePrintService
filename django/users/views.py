@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 import os
 from datetime import datetime
 from django.shortcuts import get_object_or_404
-from .models import File
+from .models import File, UserProfile
 from rest_framework.permissions import IsAuthenticated
 
 load_dotenv()
@@ -21,14 +21,16 @@ nextcloud_admin_user = os.getenv("NEXTCLOUD_ADMIN_USER")
 nextcloud_admin_password = os.getenv("NEXTCLOUD_ADMIN_PASSWORD")
 
 
-class UploadFileAPIView(APIView):
+class MultiFunctionFileAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         userid = CustomUserSerializer(request.user).data['id']
+
         user_files = File.objects.filter(owner=userid)
+
         file_serializer = FileSerializer(user_files, many=True)
         response_data = {
             "files": file_serializer.data
@@ -60,7 +62,7 @@ class UploadFileAPIView(APIView):
                                          auth=HTTPBasicAuth(nextcloud_admin_user, nextcloud_admin_password))
 
             if file_response.status_code in [200, 201]:
-
+                file_serializer.save(owner=CustomUser.objects.get(id=CustomUserSerializer(request.user).data['id']))
                 file_instance = file_serializer.instance
                 file_instance.name = filename_with_time
                 file_instance.url = upload_url
@@ -90,14 +92,36 @@ class UploadFileAPIView(APIView):
             return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class FileDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, *args, **kwargs):
+        try:
+            file = File.objects.get(id=id, owner=request.user)  # Ensure the file belongs to the logged-in user
+            serializer = FileSerializer(file)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except File.DoesNotExist:
+            return Response({'message': 'File not found'}, status=status.HTTP_404_NOT_FOUND)
+
+#Не работает
+    def delete(self, request, id, *args, **kwargs):
+        try:
+            file = File.objects.get(id=id, owner=request.user)
+            file.delete()
+            return Response({'message': 'File deleted'}, status=status.HTTP_204_NO_CONTENT)
+        except File.DoesNotExist:
+            return Response({'message': 'File not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class UserAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-
-        response = CustomUserSerializer(CustomUser.objects.all(),many=True)
+        response = CustomUserSerializer(CustomUser.objects.all(), many=True)
 
         return Response(response.data, status=status.HTTP_200_OK)
+
 
 class UserAvatarAPIView(APIView):
     def post(self, request, *args, **kwargs):
@@ -109,13 +133,11 @@ class UserAvatarAPIView(APIView):
             file_content = file.read()
             file_serializer.save(owner=request.user)
 
-
             username = CustomUser.objects.get(id=CustomUserSerializer(request.user).data['id']).username
             folder_url = f"http://{url}/remote.php/webdav/{username}/"
 
             current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             filename_with_time = f"{current_time}_{file.name}"
-
 
             # Попытка создать папку, если она не существует
             folder_response = requests.request("MKCOL", folder_url,
@@ -131,13 +153,28 @@ class UserAvatarAPIView(APIView):
 
             if file_response.status_code in [200, 201]:
 
+
                 file_instance = file_serializer.instance
                 file_instance.name = filename_with_time
                 file_instance.url = upload_url
                 file_instance.save()
+
+                UserProfile.objects.update_or_create(
+                    user=request.user,
+                    defaults={'avatar': file_instance}
+                )
 
                 return Response(file_serializer.data, status=status.HTTP_201_CREATED)
             else:
                 return Response(file_response.text, status=file_response.status_code)
         else:
             return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request, *args, **kwargs):
+        def get(self, request, id, *args, **kwargs):
+            try:
+                file = File.objects.get(id=id, owner=request.user)  # Ensure the file belongs to the logged-in user
+                serializer = FileSerializer(file)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except File.DoesNotExist:
+                return Response({'message': 'Avatar not found'}, status=status.HTTP_404_NOT_FOUND)

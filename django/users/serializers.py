@@ -6,7 +6,7 @@ class FileSerializer(serializers.ModelSerializer):
     # url = serializers.CharField(allow_blank=True, required=False)
     class Meta:
         model = File
-        fields = ['id', 'upload_date','url']
+        fields = ['id', 'upload_date','url','owner']
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
