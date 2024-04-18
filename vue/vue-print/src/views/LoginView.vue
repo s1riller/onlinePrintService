@@ -35,15 +35,27 @@
           <h2 class="title">Регистрация</h2>
           <div class="input-field">
             <i class="fas fa-user"></i>
-            <input type="text" placeholder="Имя" />
+            <input
+              type="text"
+              placeholder="Имя"
+              v-model="userRegisterData.firstName"
+            />
           </div>
           <div class="input-field">
             <i class="fas fa-envelope"></i>
-            <input type="email" placeholder="Почта" />
+            <input
+              type="email"
+              placeholder="Почта"
+              v-model="userRegisterData.email"
+            />
           </div>
           <div class="input-field">
             <i class="fas fa-lock"></i>
-            <input type="password" placeholder="Пароль" />
+            <input
+              type="password"
+              placeholder="Пароль"
+              v-model="userRegisterData.password"
+            />
           </div>
           <input type="submit" value="Sign Up" class="btn solid" />
 
@@ -499,6 +511,12 @@ export default {
   data() {
     return {
       signUpMode: false,
+
+      userRegisterData: {
+        firstName: null,
+        email: null,
+        password: null,
+      },
     };
   },
   methods: {
