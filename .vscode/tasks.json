@@ -1,0 +1,24 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Runserver",
+      "type": "shell",
+      "command": "./django/.venv/Scripts/python ./django/manage.py runserver ",
+      "problemMatcher": [
+        "$go"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "serve",
+      "path": "vue",
+      "group": "serve",
+      "problemMatcher": [],
+      "label": "npm: serve - vue",
+      "detail": "vue-cli-service serve"
+    }
+  ]
+}

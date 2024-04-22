@@ -31,12 +31,17 @@ class RegisterSerializer(serializers.ModelSerializer):
             validators=[UniqueValidator(queryset=CustomUser.objects.all())]
             )
 
+    username = serializers.CharField(
+        required=True,
+        validators=[UniqueValidator(queryset=CustomUser.objects.all())]
+    )
+    
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = CustomUser
-        fields = ( 'password', 'password2', 'email', 'first_name')
+        fields = ( 'password', 'password2', 'email', 'first_name', 'username')
         extra_kwargs = {
             'first_name': {'required': True},
             'last_name': {'required': True}
@@ -50,7 +55,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = CustomUser.objects.create(
-            # username=validated_data['username'],
+            username=validated_data['username'],
             email=validated_data['email'],
             first_name=validated_data['first_name'],
             # last_name=validated_data['last_name']

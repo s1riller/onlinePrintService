@@ -25,8 +25,16 @@ SECRET_KEY = 'django-insecure-z1)1amd(4pb6p*y=^99$*3w(zxyleo0vn0@71$uyuo$)*b(j+=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
+CORS_ALLOW_ALL_ORIGINS = True 
+CORS_ALLOW_CREDENTIALS = True
+# CORS_ALLOWED_ORIGINS = [
+#     'http://localhost:3030',
+# ] # If this is used, then not need to use `CORS_ALLOW_ALL_ORIGINS = True`
+# CORS_ALLOWED_ORIGIN_REGEXES = [
+#     'http://localhost:3030',
+# ]
 
 # Application definition
 
@@ -44,7 +52,8 @@ INSTALLED_APPS = [
 
     "phonenumber_field",
 
-    'users'
+    'users',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -55,6 +64,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
+    'corsheaders.middleware.CorsMiddleware',
+ 
 ]
 
 ROOT_URLCONF = 'core.urls'
